@@ -46,7 +46,7 @@ func TestCloud(t *testing.T) {
 			// Create a real cloud client.
 			projDir := os.Getenv("PROJECT_DIR")
 			var connectionErr error
-			realCloudClient, connectionErr = cloud.NewClient(projDir + "/cloud-config")
+			realCloudClient, connectionErr = cloud.NewClient(projDir+"/cloud-config", 5)
 			Ω(connectionErr).ShouldNot(HaveOccurred())
 
 			// Create a real CloudStack client.

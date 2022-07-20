@@ -18,11 +18,12 @@ package main
 
 import (
 	"fmt"
-	"k8s.io/klog/v2/klogr"
 	"math/rand"
 	"os"
 	"strings"
 	"time"
+
+	"k8s.io/klog/v2/klogr"
 
 	flag "github.com/spf13/pflag"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
@@ -71,6 +72,7 @@ type managerOpts struct {
 	WatchingNamespace    string
 	WatchFilterValue     string
 	CertDir              string
+	Timeout              int
 }
 
 func setFlags() *managerOpts {
@@ -80,6 +82,11 @@ func setFlags() *managerOpts {
 		"cloud-config-file",
 		"/config/cloud-config",
 		"Overrides the default path to the cloud-config file that contains the CloudStack credentials.")
+	flag.IntVar(
+		&opts.Timeout,
+		"timeout",
+		5,
+		"Time that CAPC controller will wait for CloudStack instances to start before requeuing the request.")
 	flag.StringVar(
 		&opts.MetricsAddr,
 		"metrics-bind-addr",
@@ -127,7 +134,7 @@ func main() {
 	ctrl.SetLogger(klogr.New())
 
 	// Setup CloudStack api client.
-	client, err := cloud.NewClient(opts.CloudConfigFile)
+	client, err := cloud.NewClient(opts.CloudConfigFile, opts.Timeout)
 	if err != nil {
 		if !strings.Contains(strings.ToLower(err.Error()), "timeout") {
 			setupLog.Error(err, "unable to start manager")
@@ -161,7 +168,8 @@ func main() {
 		K8sClient:  mgr.GetClient(),
 		BaseLogger: ctrl.Log.WithName("controllers"),
 		Scheme:     mgr.GetScheme(),
-		CSClient:   client}
+		CSClient:   client,
+		Timeout:    opts.Timeout}
 
 	setupReconcilers(base, mgr)
 

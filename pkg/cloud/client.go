@@ -18,6 +18,7 @@ package cloud
 
 import (
 	"strings"
+	"time"
 
 	"github.com/apache/cloudstack-go/v2/cloudstack"
 	"github.com/pkg/errors"
@@ -53,7 +54,7 @@ type Config struct {
 	VerifySSL bool   `ini:"verify-ssl"`
 }
 
-func NewClient(ccPath string) (Client, error) {
+func NewClient(ccPath string, timeout int) (Client, error) {
 	c := &client{config: Config{VerifySSL: true}}
 	if rawCfg, err := ini.Load(ccPath); err != nil {
 		return nil, errors.Wrapf(err, "reading config at path %s", ccPath)
@@ -68,6 +69,7 @@ func NewClient(ccPath string) (Client, error) {
 	// comments for more details
 	c.cs = cloudstack.NewAsyncClient(c.config.APIURL, c.config.APIKey, c.config.SecretKey, c.config.VerifySSL)
 	c.csAsync = cloudstack.NewClient(c.config.APIURL, c.config.APIKey, c.config.SecretKey, c.config.VerifySSL)
+	c.csAsync.AsyncTimeout(int64((time.Duration(timeout) * time.Minute) / time.Second))
 
 	_, err := c.cs.APIDiscovery.ListApis(c.cs.APIDiscovery.NewListApisParams())
 	if err != nil && strings.Contains(strings.ToLower(err.Error()), "i/o timeout") {
