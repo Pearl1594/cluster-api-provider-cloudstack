@@ -46,6 +46,7 @@ type ReconcilerBase struct {
 	Scheme     *runtime.Scheme
 	K8sClient  client.Client
 	CSClient   cloud.Client
+	Timeout    int
 }
 
 // CloudStackBaseContext is the base CloudStack data structure created/copied for each reconciliation request to avoid
